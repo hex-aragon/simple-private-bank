@@ -14,56 +14,41 @@ await initThreadPool();
 //localProgramExecution2
 async function localProgramExecution(program, aleoFunction, inputs) {
   const programManager = new ProgramManager();
-  console.log("programManager",programManager)
-  
+  console.log("programManager", programManager);
+
   // Create a temporary account for the execution of the program
   const account = new Account();
-  console.log("Account",account)
-  //{
-//     "_privateKey": {
-//       "__wbg_ptr": 27955240
-//   },
-//   "_viewKey": {
-//       "__wbg_ptr": 27918416
-//   },
-//   "_address": {
-//       "__wbg_ptr": 27994880
-//   }
-// }
+  console.log("Account", account);
 
   programManager.setAccount(account);
-  console.log("programManager Account",programManager)
-  
+  console.log("programManager Account", programManager);
+
   const executionResponse = await programManager.run(
     program,
     aleoFunction,
     inputs,
-    false,
+    false
   );
-  
-  console.log("executionResponse",executionResponse)
+
+  console.log("executionResponse", executionResponse);
   return executionResponse.getOutputs();
 }
-
 
 async function localProgramExecution2(program, aleoFunction, inputs) {
   const programManager = new ProgramManager();
 
   // Create a temporary account for the execution of the program
-  const account = new Account()
- // const account = ""
+  const account = new Account();
   programManager.setAccount(account);
 
   const executionResponse = await programManager.run(
     program,
     aleoFunction,
     inputs,
-    false,
+    false
   );
   return executionResponse.getOutputs();
 }
-
-
 
 async function getPrivateKey() {
   const key = new PrivateKey();
@@ -75,11 +60,13 @@ async function deployProgram(program) {
   keyProvider.useCache(true);
 
   // Create a record provider that will be used to find records and transaction data for Aleo programs
-  const networkClient = new AleoNetworkClient("https://api.explorer.aleo.org/v1");
+  const networkClient = new AleoNetworkClient(
+    "https://api.explorer.aleo.org/v1"
+  );
 
   // Use existing account with funds
   const account = new Account({
-    privateKey: "user1PrivateKey",
+    privateKey: import.meta.env.PRIVATE_KEY,
   });
 
   const recordProvider = new NetworkRecordProvider(account, networkClient);
@@ -88,13 +75,13 @@ async function deployProgram(program) {
   const programManager = new ProgramManager(
     "https://api.explorer.aleo.org/v1",
     keyProvider,
-    recordProvider,
+    recordProvider
   );
 
   programManager.setAccount(account);
 
   // Define a fee to pay to deploy the program
-  const fee = 1.9; // 1.9 Aleo credits
+  const fee = 12; // 1.9 Aleo credits
 
   // Deploy the program to the Aleo network
   const tx_id = await programManager.deploy(program, fee);
@@ -106,5 +93,10 @@ async function deployProgram(program) {
   return tx_id;
 }
 
-const workerMethods = { localProgramExecution, getPrivateKey, deployProgram , localProgramExecution2};
+const workerMethods = {
+  localProgramExecution,
+  getPrivateKey,
+  deployProgram,
+  localProgramExecution2,
+};
 expose(workerMethods);

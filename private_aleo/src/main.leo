@@ -1,22 +1,22 @@
-// The 'private_aleo' program.
+// 'private_aleo' 프로그램.
 program private_aleo.aleo {
-    // A token, issued by a bank.
-    // - 'owner'  : The address of the account that owns the record associated with this token.
-    // - 'amount' : The amount of tokens owned by the account.
+    // 은행에서 발행한 토큰.
+    // - 'owner'  : 이 토큰과 관련된 레코드를 소유한 계정의 주소.
+    // - 'amount' : 계정이 소유한 토큰의 양.
     record Token {
         owner: address,
         amount: u64,
     }
 
-    // An on-chain mapping, storing the amount of tokens owned by each account
-    // The account is stored as a to preserve user privacy.
+    // 각 계정이 소유한 토큰의 양을 저장하는 온체인 매핑
+    // 계정은 사용자의 프라이버시를 보존하기 위해 필드로 저장됩니다.
     mapping balances: field => u64;
 
-    // Returns a new Token.
-    // - `owner` : The address of the account to issue the token to.
-    // - `amount`: The amount of tokens to issue.
-    // Requires that the function caller is the bank.
-    // The bank's address is aleo1t0uer3jgtsgmx5tq6x6f9ecu8tr57rzzfnc2dgmcqldceal0ls9qf6st7a.
+    // 새로운 토큰을 반환합니다.
+    // - `owner` : 토큰을 발행할 계정의 주소.
+    // - `amount`: 발행할 토큰의 양.
+    // 함수 호출자가 은행이어야 합니다.
+    // 은행의 주소는 aleo1t0uer3jgtsgmx5tq6x6f9ecu8tr57rzzfnc2dgmcqldceal0ls9qf6st7a입니다.
     transition issue(owner: address, amount: u64) -> Token {
         //assert_eq(self.caller, aleo1t0uer3jgtsgmx5tq6x6f9ecu8tr57rzzfnc2dgmcqldceal0ls9qf6st7a);
         return Token {
@@ -25,10 +25,10 @@ program private_aleo.aleo {
         };
     }
 
-    // Deposits some amount of money into the bank.
-    // Returns a new Token with the remaining amount of money.
-    // - `token` : A record containing tokens to deposit.
-    // - `amount`: The amount of tokens to deposit.
+    // 은행에 일정 금액을 입금합니다.
+    // 입금 후 남은 금액의 토큰을 새로운 토큰으로 반환합니다.
+    // - `token` : 입금할 토큰을 담은 레코드.
+    // - `amount`: 입금할 토큰의 양.
     transition deposit(token: Token, amount: u64) -> Token {
         let difference: u64 = token.amount - amount;
 
@@ -37,26 +37,26 @@ program private_aleo.aleo {
             amount: difference,
         };
 
-        // Compute the hash of the token owner.
+        // 토큰 소유자의 해시를 계산합니다.
         let hash: field = BHP256::hash_to_field(token.owner);
 
         return remaining then finalize(hash, amount);
     }
 
-    // Updates on-chain state by the amount of tokens deposited.
-    // - `hash`  : The hash of the token owner.
-    // - `amount`: The amount of tokens that were deposited.
+    // 입금된 토큰의 양만큼 온체인 상태를 업데이트합니다.
+    // - `hash`  : 토큰 소유자의 해시.
+    // - `amount`: 입금된 토큰의 양.
     finalize deposit(hash: field, amount: u64) {
         let current_amount: u64 = Mapping::get_or_use(balances, hash, 0u64);
         Mapping::set(balances, hash, current_amount + amount);
     }
 
-    // Returns a new Token containing the amount of money withdrawn.
-    // - `recipient`: The address of the account to withdraw the tokens to.
-    // - `amount`   : The amount of tokens to withdraw.
-    // - `rate`     : The compound interest rate.
-    // - `periods`  : The number of periods to compound the interest over.
-    // Requires that the function caller is the bank.
+    // 출금할 금액의 토큰을 담은 새로운 토큰을 반환합니다.
+    // - `recipient`: 토큰을 출금할 계정의 주소.
+    // - `amount`   : 출금할 토큰의 양.
+    // - `rate`     : 복리 이자율.
+    // - `periods`  : 이자를 복리로 계산할 기간.
+    // 함수 호출자가 은행이어야 합니다.
     transition withdraw(recipient: address, amount: u64, rate: u64, periods: u64) -> Token {
        // assert_eq(self.caller, aleo1t0uer3jgtsgmx5tq6x6f9ecu8tr57rzzfnc2dgmcqldceal0ls9qf6st7a);
         let hash: field = BHP256::hash_to_field(recipient);
@@ -71,18 +71,18 @@ program private_aleo.aleo {
         return token then finalize(hash, amount);
     }
 
-    // Updates on-chain state by the amount of tokens withdrawn.
-    // - `hash`  : The hash of the token owner.
-    // - `amount`: The amount of tokens that were withdrawn.
+    // 출금된 토큰의 양만큼 온체인 상태를 업데이트합니다.
+    // - `hash`  : 토큰 소유자의 해시.
+    // - `amount`: 출금된 토큰의 양.
     finalize withdraw(hash: field, amount: u64) {
         let current_amount: u64 = Mapping::get_or_use(balances, hash, 0u64);
         Mapping::set(balances, hash, current_amount - amount);
     }
 
-    // Returns the total amount of tokens after compounding interest.
-    // - `principal`: The amount of tokens to compound interest over.
-    // - `rate`     : The compound interest rate.
-    // - `periods`  : The number of periods to compound the interest over.
+    // 복리 이자를 적용한 후의 총 토큰 양을 반환합니다.
+    // - `principal`: 이자를 복리로 계산할 토큰의 양.
+    // - `rate`     : 복리 이자율.
+    // - `periods`  : 이자를 복리로 계산할 기간.
     function calculate_interest(principal: u64, rate: u64, periods: u64) -> u64 {
         let amount: u64 = principal;
 
